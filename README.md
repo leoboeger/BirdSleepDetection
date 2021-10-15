@@ -1,0 +1,2 @@
+# BirdSleepDetection
+pylibLeo dependency
