@@ -2,7 +2,7 @@
 """
 Created on Fri May 14 15:51:06 2021
 
-@author: labgrprattenborg
+@author: LeoBoeger
 """
 
 # plot script
