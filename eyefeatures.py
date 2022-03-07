@@ -24,6 +24,7 @@ from tqdm import trange
 from pylibLeo import ODR_CenterRadius as odr
 #from pylibLeo import VideoMaker as vidm
 from pylibLeo import GeoMedian as gmL
+from pylibLeo import rotation as cpL
 
 
 
@@ -190,5 +191,45 @@ def Thresh_TimeConserved(df2filt, dfcol4bool, thresh, mode):
         df_filt.loc[dfcol4bool<thresh] = np.nan
     
     return df_filt
+
+
+###### NEW NEW NEW ###########################################################
+### incorpartes the  eyelid bp to check wheter an eye is open
+def OpenEye(df, degree):
+    AllEye = [x for x in df if not 'likelihood' in x] # get headers xy for the eye bp's
+    AllEyemx = [[AllEye[x], AllEye[x+1]] for x in range(len(AllEye)) if x%2==0] # make pairs of headers, x and y of the same bp become one list
+    Lrot = pd.DataFrame()
+    for mx in AllEyemx:
+        tempRot = cpL.rotate_via_numpy(df[mx[0]], df[mx[1]],degree, deg=True) # rotation along the given degree
+        tempDf = pd.DataFrame(tempRot, columns=mx) 
+        Lrot = pd.concat([Lrot, tempDf], axis=1) # df for current bp is concated to the Lrot df
+    
+    LrotY = Lrot[[x for x in Lrot.columns if x.__contains__('y')]]# selecting the y columns, cause for the eyelid movement this is the intersting direction
+    LrotY = LrotY.rolling(5, min_periods=1, center=True).mean()
+    LOpen = pd.DataFrame([LrotY.iloc[:,0]<LrotY.iloc[:,1]-1, LrotY.iloc[:,0]<LrotY.iloc[:,4]-1]).T #boolean df that checks if the eyelid is below upper pupil bp
+    LOpen['both'] = np.where(LOpen.all(axis=1) ,1,0) # binary if previous is true for one or the other
+    OnOpen, OffOpen = [],[]
+    for r in range(len(LOpen['both'])): # list of starting and ending points of eye opening
+        if LOpen['both'][r] == 1:
+            if r == 0 or LOpen['both'][r-1] == 0: # starting
+                OnOpen.append(r)
+            if r == len(LOpen['both'])-1 or LOpen['both'][r+1] == 0: # ending
+                OffOpen.append(r)
+    OnOpen_sm, OffOpen_sm = [],[] # appending two bouts if the time in between is less than 3 seconds
+    for r in range(len(OnOpen)):
+        if r==0 or OffOpen[r-1] <= OnOpen[r]-30: # only append start if previous ends 90 frames before current starts
+            OnOpen_sm.append(OnOpen[r])
+        if r== len(OnOpen)-1 or OnOpen[r+1] > OffOpen[r]+30: # only append if next starts 90 frames after current ends
+            OffOpen_sm.append(OffOpen[r])
+    
+    OnOpen_smwb = [x-15 for x in OnOpen_sm] # adding a border to the eye open period of 15 frames, half a sec
+    OffOpen_smwb = [x+15 for x in OffOpen_sm]
+            
+    LOpen_sm =  pd.DataFrame([0]*len(LOpen), columns=['open']) # make a df
+        
+    for j in range(len(OnOpen_sm)):
+        LOpen_sm.iloc[OnOpen_sm[j]:OffOpen_sm[j]+1,0] = 1
+    
+    return LOpen_sm
 
 

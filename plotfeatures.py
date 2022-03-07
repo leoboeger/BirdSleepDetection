@@ -36,14 +36,14 @@ def plotDiameter(org, cor, norm, base, title):
     ax.legend(loc='lower center', bbox_to_anchor=(0.5, -0.25), ncol=4)
     plt.title(title+' pupil diameter over time')
     fig.subplots_adjust(bottom=0.2)
-    
+
     return fig
 
 
 
 ### 3D center movement
 def plot3DCenter(x, y, z, title):
-    fig = plt.figure(figsize=(100,50))
+    fig = plt.figure()
     ax = fig.add_subplot(121, projection='3d')
     width = depth = 1
     bottom = np.zeros_like(z)
@@ -56,7 +56,7 @@ def plot3DCenter(x, y, z, title):
     ax.set_xlabel('x')
     ax.set_ylabel('y')
     plt.title(title+' eye frequency, median centered')
-    
+
     return fig
 
 
@@ -66,13 +66,13 @@ def plotVeloRadar( angle, velo, title):
     ax = fig.add_subplot(projection='polar',rasterized=True)
     radar = ax.scatter(angle['angle'], velo['velocity pxl/s'], c=velo['velocity pxl/s'], alpha=0.75)
     plt.title(title+" eye velocity and angle from base")
-    
+
     note = "note: As the coordinate system of images is upside down, this\nplot is as well. I.e. movements towards 90deg are forward eye\nconvergences"
     fig.text(.12, -0.1, note, bbox=dict(boxstyle='square', fc='w', ec='r'))
-    
+
     cb = plt.colorbar(radar,ax = [ax], location = 'left')
     cb.set_label("velocity in pxl/s from previous frame")
-    
+
     return fig
 
 
@@ -84,24 +84,24 @@ def plotDistRadar(angle, dist, title):
     #ax.plot(LCbased['angle'], LCbased['eucl dist'], alpha=0.5)
     radar = ax.scatter(angle['angle'], angle['eucl dist'], c= dist['velocity pxl/s'], alpha=0.75)
     plt.title(title+" eye distance and angle from base\nwith color coded velocity")
-    
+
     note = "note: As the coordinate system of images is upside down, this\nplot is as well. I.e. movements towards 90deg are forward eye\nconvergences"
     fig.text(.14, -0.1, note, bbox=dict(boxstyle='square', fc='w', ec='r'))
-    
+
     cb = plt.colorbar(radar,ax = [ax], location = 'left')
     cb.set_label("velocity pxl/s")
-    
+
     return fig
 
 def plotCbasedRot(x, y, title, xaxon, xlabel, ylabel):
     fig = plt.figure(figsize=(60,60))
-    ax = fig.add_subplot()  
+    ax = fig.add_subplot()
     ax.scatter( x, y)
     #XYmax = max(np.max(x),np.max(y))+4
     #XYmin = min(np.min(x),np.min(y))-4
     ax.set_xlim(-16,36)
     ax.set_ylim(-16,36)
-    plt.axhline(c='black')   
+    plt.axhline(c='black')
     plt.axvline(c='black')
     ax.set_xlabel(xlabel)
     ax.set_ylabel(ylabel)
@@ -112,11 +112,11 @@ def plotCbasedRot(x, y, title, xaxon, xlabel, ylabel):
             xytext=(0.7, 0.7), textcoords='axes fraction',
             arrowprops=dict(arrowstyle="->",
                             connectionstyle="angle3,angleA=0,angleB=70"))
-    
-    return fig
-                 
 
-    
+    return fig
+
+
+
 
 
 ### Kinematics comparison Velocity, Angle and Distance
@@ -127,7 +127,7 @@ def plotKinematics(kine, centered, ymovement, title, w_size, fps):
     axs[0].set_ylabel('pxl')
     axs[1].plot(range(len(kine)), ymovement)
     #axs[1].plot(range(len(kine)), ymovement, linestyle='dashed', alpha=0.2, c=(0,0,0))
-    axs[1].axhline(y= 0,color= 'tab:red') 
+    axs[1].axhline(y= 0,color= 'tab:red')
     axs[1].set_title('rotated x movement from geometric median')
     axs[1].set_ylabel('pxl')
     axs[2].plot(range(len(kine)), centered['eucl dist'], 'tab:green')
@@ -135,7 +135,7 @@ def plotKinematics(kine, centered, ymovement, title, w_size, fps):
     axs[2].set_ylabel('pxl')
     fig.suptitle("{} eye kinematics, smoothed with SMA of window {} frames, {} sec".format(title,w_size, format(w_size/fps, '.2f')))
     plt.xlabel('time (frames)')
-    
+
     return fig
 
 
@@ -160,10 +160,23 @@ def plotCorr( a,b, title, labela, labelb, keeplabelstart, keeplabelend):
     ax.set_xlabel(labela)
     wordsa = ' '.join(labela.split(' ')[keeplabelstart: keeplabelend])
     wordsb = ' '.join(labelb.split(' ')[keeplabelstart: keeplabelend])
-    
+
     fig.suptitle("Correlation of {a} and {b} for {t}".format(a=wordsa, b= wordsb, t=title))
-    
+
     return fig
+
+def plotCorrMultiple(a, names):
+    fig,ax = plt.subplots(len(a),len(a))
+    #fig.set_facecolor('#E1F1E9')
+    for x in range(len(a)):
+        for y in range(len(a)):
+            #ax[y,x].plot(a[x],a[y])
+            ax[y,x].scatter(a[x],a[y],marker='.')
+            if y == len(a):
+                ax[y,x].set_xlabel(names[x])
+            if x == 0:
+                ax[y,x].set_ylabel(names[y])
+            ax[y,x].label_outer()
 
 def write_pdf(fname, figures, out):
     images = []
@@ -172,7 +185,7 @@ def write_pdf(fname, figures, out):
         fig_img = PIL.Image.frombytes('RGB', fig.canvas.get_width_height(), fig.canvas.tostring_rgb())
         images.append(fig_img)
     images[0].save(fname, save_all=True, append_images=images[1:])
-    
+
 ##############################################################################
 ### UNIVERSAL ################################################################
 
@@ -187,7 +200,7 @@ def plotOrg2Norm(org, norm, title, cor=False, base=False):
     ax.legend(loc='lower center', bbox_to_anchor=(0.5, -0.15), ncol=4)
     plt.title(title+' over time')
     fig.subplots_adjust(bottom=0.2)
-    
+
     return fig
 
 def plotScatNLine(org, norm, title, cor=False, base=False):
@@ -201,7 +214,7 @@ def plotScatNLine(org, norm, title, cor=False, base=False):
     ax.legend(loc='lower center', bbox_to_anchor=(0.5, -0.15), ncol=4)
     plt.title(title+' over time')
     fig.subplots_adjust(bottom=0.2)
-    
+
     return fig
 
 
@@ -212,7 +225,7 @@ def plotOverTime(df, col,xname, yname):
     ax.set_xlabel(xname)
     ax.set_ylabel(yname)
     plt.title(yname+' over time')
-    
+
     return fig
 
 def plot3InSpace(df, colsNlabel, unit, title):
@@ -224,24 +237,26 @@ def plot3InSpace(df, colsNlabel, unit, title):
     ax.set_ylabel('y [{u}]'.format(u=unit))
     ax.legend()
     plt.title(title+' over space')
-    
+
     return fig
 
 def plotPeakBouts(org, peaks, ons, offs, signal=False, title='#', baseline=False):
     fig, ax=plt.subplots(figsize=(100,50))
-    ax.plot(range(len(org.iloc[:,0])), org.iloc[:,0], label ='original data')
-    ax.plot(range(len(signal.iloc[:,0])), signal.iloc[:,0], label ='signal')
-    
-    ax.plot(range(len(peaks.iloc[:,0])), peaks.iloc[:,0],'or', label= 'peaks')
-    ax.scatter(range(len(ons.iloc[:,0])), ons.iloc[:,0], label = 'on', marker=6, c='tab:green')
-    ax.scatter(range(len(offs.iloc[:,0])), offs.iloc[:,0], label = 'off', marker=7, c='tab:orange')
+    ax.plot([t/30 for t in range(len(org.iloc[:,0]))], org.iloc[:,0], label ='original data')
+    ax.plot([t/30 for t in range(len(org.iloc[:,0]))], signal.iloc[:,0], label ='signal')
+
+    ax.plot([t/30 for t in range(len(org.iloc[:,0]))], peaks.iloc[:,0],'or', label= 'peaks')
+    ax.scatter([t/30 for t in range(len(org.iloc[:,0]))], ons.iloc[:,0], label = 'on', marker=6, c='tab:green')
+    ax.scatter([t/30 for t in range(len(org.iloc[:,0]))], offs.iloc[:,0], label = 'off', marker=7, c='tab:orange')
     if isinstance(baseline, pd.DataFrame) or isinstance(baseline, np.ndarray):
-        ax.plot(range(len(baseline.iloc[:,0])), baseline.iloc[:,0], label ='threshold')
-    if isinstance(baseline, int) or isinstance(baseline, float):
+        ax.plot([t/30 for t in range(len(org.iloc[:,0]))], baseline.iloc[:,0], label ='threshold')
+    elif all(map(lambda el: type(el) is pd.DataFrame, baseline)):
+        for el in baseline:
+            ax.plot([t/30 for t in range(len(org.iloc[:,0]))], el.iloc[:,0], label ='threshold')
+    elif isinstance(baseline, int) or isinstance(baseline, float):
         ax.axhline(baseline, label ='threshold', c='red')
     ax.legend(loc='lower center', bbox_to_anchor=(0.5, -0.15), ncol=4)
     plt.title(title+' over time')
     fig.subplots_adjust(bottom=0.2)
-    
-    return fig
 
+    return fig
